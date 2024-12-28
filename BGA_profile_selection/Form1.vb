@@ -1,4 +1,5 @@
-﻿Imports System.IO
+﻿Imports System.Diagnostics.Contracts
+Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 
@@ -15,21 +16,29 @@ Public Class Form1
     Private Sub go_button_Click(sender As Object, e As EventArgs) Handles go_button.Click
         'Variable Declaration
         Dim file_name As String,
-            setting_file As String
-
+            setting_file As String,
+            part_number As String
 
         file_name = "Cobalt_profile"
-
+        part_number = pn_textbox.Text
 
         setting_file = My.Computer.FileSystem.ReadAllText("C:\BGA_profile_selection\setting.txt")   'read setting file
         'Mount json using Newtonsoft.Json.dll (reference: https://stackoverflow.com/questions/37766725/how-to-read-json-file-in-vb-net)
         Dim read = Newtonsoft.Json.Linq.JObject.Parse(setting_file)
         Label6.Text = read.Item("original_profile_path").ToString
         Label7.Text = read.Item("product_profile_path").ToString
-        bga_rework_profile_textbox.Text = read.Item("profile_list")("PN#1")("profile").ToString
-        nozzle_type_textbox.Text = read.Item("profile_list")("PN#1")("nozzle").ToString
-        nozzle_location_textbox.Text = read.Item("profile_list")("PN#1")("location").ToString
-        Label8.Text = pn_textbox.Text
+        If read("profile_list")(part_number) Is Nothing Then   'Exeption control for no profile
+            MsgBox("There is no profile with provided part number " & part_number)
+        Else
+            bga_rework_profile_textbox.Text = read.Item("profile_list")(part_number)("profile").ToString
+            nozzle_type_textbox.Text = read.Item("profile_list")(part_number)("nozzle").ToString
+            nozzle_location_textbox.Text = read.Item("profile_list")(part_number)("location").ToString
+            Label8.Text = pn_textbox.Text
+        End If
+
+
+
+
 
 
 
