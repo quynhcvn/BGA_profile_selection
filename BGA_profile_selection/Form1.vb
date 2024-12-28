@@ -15,71 +15,21 @@ Public Class Form1
     Private Sub go_button_Click(sender As Object, e As EventArgs) Handles go_button.Click
         'Variable Declaration
         Dim file_name As String,
-            original_profile_path As String,
-            original_profile_path_trim As String,
-            product_profile_path As String,
-            product_profile_path_trim As String,
-            bga_rework_parameter As String,
-            bga_profile As String,
-            nozzle_type As String,
-            nozzle_location As String
+            setting_file As String
+
 
         file_name = "Cobalt_profile"
-        original_profile_path_trim = ""
-        product_profile_path_trim = ""
-        nozzle_type = ""
-        nozzle_location = ""
-        bga_profile = ""
-
-        'Read setting parameter
-        'Read original profile path
-        Using reader As New StreamReader("C:\BGA_profile_selection\setting.txt")
-            While Not reader.EndOfStream
-                original_profile_path = reader.ReadLine()
-                If original_profile_path.Contains("[original_profile_path]") Then
-                    original_profile_path_trim = original_profile_path.Substring(original_profile_path.IndexOf("]") + 1)   'cut string after ] character
-                End If
-            End While
-        End Using
-        'Read profile path
-        Using reader As New StreamReader("C:\BGA_profile_selection\setting.txt")
-            While Not reader.EndOfStream
-                product_profile_path = reader.ReadLine()
-                If product_profile_path.Contains("[product_profile_path]") Then
-                    product_profile_path_trim = product_profile_path.Substring(product_profile_path.IndexOf("]") + 1)   'cut string after ] character
-                End If
-            End While
-        End Using
-        'Read profile and parameter
-        Using reader As New StreamReader("C:\BGA_profile_selection\setting.txt")
-            While Not reader.EndOfStream
-                bga_rework_parameter = reader.ReadLine()
-                If bga_rework_parameter.Contains("[PN#1]") Then
-                    bga_profile = bga_rework_parameter.Substring(bga_rework_parameter.IndexOf("<Profile>") + 1)   'cut string after ] character
-                    nozzle_type = bga_rework_parameter.Substring(bga_rework_parameter.IndexOf("<Nozzle>") + 1)   'cut string after ] character
-                    nozzle_location = bga_rework_parameter.Substring(bga_rework_parameter.IndexOf("<Location>") + 1)   'cut string after ] character
-                End If
-            End While
-        End Using
-        'Read profile and parameter
-        Using reader As New StreamReader("C:\BGA_profile_selection\setting.txt")
-            While Not reader.EndOfStream
-                bga_rework_parameter = reader.ReadLine()
-                If bga_rework_parameter.Contains("[PN#1]") Then
-                    bga_profile = bga_rework_parameter.Substring(bga_rework_parameter.IndexOf("<Profile>") + 1)   'cut string after ] character
-                    nozzle_type = bga_rework_parameter.Substring(bga_rework_parameter.IndexOf("<Nozzle>") + 1)   'cut string after ] character
-                    nozzle_location = bga_rework_parameter.Substring(bga_rework_parameter.IndexOf("<Location>") + 1)   'cut string after ] character
-                End If
-            End While
-        End Using
 
 
-        Label6.Text = original_profile_path_trim
-        Label7.Text = product_profile_path_trim
+        setting_file = My.Computer.FileSystem.ReadAllText("C:\BGA_profile_selection\setting.txt")   'read setting file
+        'Mount json using Newtonsoft.Json.dll (reference: https://stackoverflow.com/questions/37766725/how-to-read-json-file-in-vb-net)
+        Dim read = Newtonsoft.Json.Linq.JObject.Parse(setting_file)
+        Label6.Text = read.Item("original_profile_path").ToString
+        Label7.Text = read.Item("product_profile_path").ToString
+        bga_rework_profile_textbox.Text = read.Item("profile_list")("PN#1")("profile").ToString
+        nozzle_type_textbox.Text = read.Item("profile_list")("PN#1")("nozzle").ToString
+        nozzle_location_textbox.Text = read.Item("profile_list")("PN#1")("location").ToString
         Label8.Text = pn_textbox.Text
-        nozzle_type_textbox.Text = nozzle_type
-        nozzle_location_textbox.Text = nozzle_location
-        bga_rework_profile_textbox.Text = bga_profile
 
 
 
