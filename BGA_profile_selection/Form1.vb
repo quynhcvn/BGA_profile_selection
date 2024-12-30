@@ -5,6 +5,7 @@ Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 Imports Newtonsoft.Json.Linq
 Imports System
 Imports Newtonsoft.Json
+Imports System.Diagnostics
 
 Public Class Form1
 
@@ -41,7 +42,7 @@ Public Class Form1
         'Mount json using Newtonsoft.Json.dll (reference: https://stackoverflow.com/questions/37766725/how-to-read-json-file-in-vb-net)
         Dim read = Newtonsoft.Json.Linq.JObject.Parse(setting_file)
 
-        If read("profile_list")(part_number) Is Nothing Then   'Exeption control for no profile case
+        If read("profile_list")(part_number) Is Nothing Then   'Exeption control for no/wrong profile case
             MsgBox("There is no profile with provided part number " & part_number)
             nozzle_type_textbox.Text = ""
             nozzle_location_textbox.Text = ""
@@ -80,7 +81,6 @@ Public Class Form1
         part_number = pn_textbox.Text
         component_location = component_selection.Text
 
-
         setting_file = My.Computer.FileSystem.ReadAllText("C:\BGA_profile_selection\setting.txt")   'read setting file
         'Mount json using Newtonsoft.Json.dll (reference: https://stackoverflow.com/questions/37766725/how-to-read-json-file-in-vb-net)
         Dim read = Newtonsoft.Json.Linq.JObject.Parse(setting_file)
@@ -88,29 +88,41 @@ Public Class Form1
         product_profile_path = read.Item("product_profile_path").ToString
         nozzle_image_path = read.Item("nozzle_image_path").ToString
 
-        If read("profile_list")(part_number) Is Nothing Then   'Exeption control for no profile case
+        If read("profile_list")(part_number) Is Nothing Then   'Exeption control for no/wrong profile case
             MsgBox("There is no profile with provided part number " & part_number)
             nozzle_type_textbox.Text = ""
             nozzle_location_textbox.Text = ""
             bga_rework_profile_textbox.Text = ""
             nozzle_picture.Image = Nothing
+        ElseIf read("profile_list")(part_number)(component_location) Is Nothing Then   'Exeption control for no/wrong component location case
+            MsgBox("There is no profile with provided component location " & component_location)
+        ElseIf component_location = "" Then   'Exeption control for no component selected case
+            MsgBox("No component is selected")
         Else
-            If component_location = "" Then
-                MsgBox("No component is selected")
-            Else
-                profile_name = read.Item("profile_list")(part_number)(component_location)("profile").ToString
-                nozzle_type = read.Item("profile_list")(part_number)(component_location)("nozzle").ToString
-                nozzle_location = read.Item("profile_list")(part_number)(component_location)("location").ToString
-                'mount to form's text box
-                bga_rework_profile_textbox.Text = profile_name
-                nozzle_type_textbox.Text = nozzle_type
-                nozzle_location_textbox.Text = nozzle_location
-                'Insert nozzle image
-                Dim imageFileName = Path.Combine(Application.StartupPath, nozzle_image_path, nozzle_type & ".png")
-                nozzle_picture.Image = Image.FromFile(imageFileName)
-
-            End If
+            profile_name = read.Item("profile_list")(part_number)(component_location)("profile").ToString
+            nozzle_type = read.Item("profile_list")(part_number)(component_location)("nozzle").ToString
+            nozzle_location = read.Item("profile_list")(part_number)(component_location)("location").ToString
+            'mount to form's text box
+            bga_rework_profile_textbox.Text = profile_name
+            nozzle_type_textbox.Text = nozzle_type
+            nozzle_location_textbox.Text = nozzle_location
+            'Insert nozzle image
+            Dim imageFileName = Path.Combine(Application.StartupPath, nozzle_image_path, nozzle_type & ".png")
+            nozzle_picture.Image = Image.FromFile(imageFileName)
         End If
+
+        'Delete files and folder on C:\BGA_profile_selection\Products\
+        My.Computer.FileSystem.DeleteDirectory(product_profile_path, FileIO.DeleteDirectoryOption.DeleteAllContents)
+        'Copy profiles
+        If My.Computer.FileSystem.DirectoryExists(original_profile_path & profile_name) Then    'Check the file exist
+            My.Computer.FileSystem.CopyDirectory(original_profile_path & profile_name, product_profile_path & profile_name, overwrite:=True)     'Copy file
+        Else
+            MsgBox("BGA profile not found.")
+        End If
+
     End Sub
 
+    Private Sub UserGuideToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles UserGuideToolStripMenuItem.Click
+        MsgBox("Open user guide file: to be developed...")
+    End Sub
 End Class
